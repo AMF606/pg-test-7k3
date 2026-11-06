@@ -105,6 +105,8 @@
     border-radius: 7px;
   }
   #status { margin: 0; font-weight: 800; font-size: 14px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; font-variant-numeric: tabular-nums; }
+  #status.ready { color: var(--ink); font-size: 18px; letter-spacing: 0.12em; animation: pulse 1.2s ease-in-out infinite; cursor: pointer; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.45; } }
   #status.err { color: var(--alarm); text-transform: none; letter-spacing: 0; max-width: 32ch; }
   .hint { position: absolute; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); left: 0; right: 0; margin: 0; font-size: 13px; color: var(--muted); }
   @media (prefers-reduced-motion: reduce) { .blob { animation: none; } }
@@ -175,10 +177,28 @@
       fill.style.width = pct + "%";
       bar.setAttribute("aria-valuenow", pct);
       status.textContent = pct < 100 ? "Loading " + pct + "%" : "Starting";
-    }).then(function () {
-      loader.classList.add("done");
-      setTimeout(function () { loader.hidden = true; }, 450);
-      canvas.focus();
+    }).then(function (instance) {
+      // "Tap to start": the tap gives the game focus and unlocks sound (iOS), so the first tap in the menu always works.
+      status.textContent = "Tap to start";
+      status.classList.add("ready");
+      bar.hidden = true;
+      var started = false;
+      function start(e) {
+        if (started) return;
+        started = true;
+        if (e) e.preventDefault();
+        try { instance.SendMessage("POTATO GUY", "WebStarted"); } catch (err) { }   // the game ignores this tap
+        canvas.focus();
+        loader.classList.add("done");
+        setTimeout(function () { loader.hidden = true; }, 500);
+      }
+      // the start tap must never reach the game underneath (it pressed PLAY): swallow every pointer event on the card
+      ["pointerdown", "mousedown", "touchstart", "pointerup", "mouseup", "click"].forEach(function (t) {
+        loader.addEventListener(t, function (e) { e.stopPropagation(); if (t !== "touchstart") e.preventDefault(); }, { passive: false });
+      });
+      loader.addEventListener("pointerup", start);
+      loader.addEventListener("touchend", function (e) { e.stopPropagation(); start(e); }, { passive: false });
+      document.addEventListener("keydown", start, { once: true });
     }).catch(function (err) {
       fail("The game could not start on this browser: " + (err && err.message ? err.message : err));
     });

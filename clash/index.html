@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="robots" content="noindex, nofollow"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no"><meta name="apple-mobile-web-app-capable" content="yes">
-<title>Veggie Clash</title>
+<title>Veggie Clash (Beta)</title><meta name="description" content="Veggie Clash beta: collect seeds, bump rival veggies, win the kitchen.">
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;800&display=swap">
@@ -18,7 +18,7 @@
     --body: "Nunito", "Segoe UI", system-ui, sans-serif;
     color-scheme: dark;
   }
-  html, body { height: 100%; }
+  html, body { height: 100%; touch-action: none; -webkit-tap-highlight-color: transparent; }
   body {
     background: var(--night);
     color: var(--ink);
@@ -32,7 +32,7 @@
     position: relative;
     height: 100%;
     width: 100%;
-    max-width: calc(100vh * 9 / 16);
+    max-width: 100%;   /* beta: the game adapts to any aspect (phones, tablets, desktop) */
     margin: 0 auto;
     background: var(--stage);
   }
@@ -105,20 +105,27 @@
     border-radius: 7px;
   }
   #status { margin: 0; font-weight: 800; font-size: 14px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; font-variant-numeric: tabular-nums; }
+  #status.ready { color: var(--ink); font-size: 18px; letter-spacing: 0.12em; animation: pulse 1.2s ease-in-out infinite; cursor: pointer; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.45; } }
   #status.err { color: var(--alarm); text-transform: none; letter-spacing: 0; max-width: 32ch; }
   .hint { position: absolute; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); left: 0; right: 0; margin: 0; font-size: 13px; color: var(--muted); }
   @media (prefers-reduced-motion: reduce) { .blob { animation: none; } }
+  .cast { display: flex; align-items: flex-end; gap: 14px; }
+  .cast .v { display: block; }
+  .cast .pep { width: 46px; height: 70px; border-radius: 48% 48% 40% 40% / 60% 60% 40% 40%; background: #e4572e; box-shadow: inset 0 -8px 0 #b8432a; animation: wobble 1.1s ease-in-out infinite 0.2s; }
+  .cast .tom { width: 60px; height: 54px; border-radius: 50%; background: #e4572e; box-shadow: inset 0 -8px 0 #b8432a; animation: wobble 1.1s ease-in-out infinite 0.4s; }
+  .beta { font-family: var(--body); font-size: 12px; font-weight: 800; letter-spacing: 0.12em; vertical-align: super; background: var(--slime); color: var(--night); padding: 2px 7px; border-radius: 6px; }
 </style>
 
 <div id="stage">
   <canvas id="unity-canvas" tabindex="-1"></canvas>
   <div id="loader">
-    <div class="blob" aria-hidden="true"></div>
-    <h1>VEGGIE CLASH</h1>
-    <p class="tag">Collect, bump, win.</p>
+    <div class="cast" aria-hidden="true"><span class="v pep"></span><span class="v blob"></span><span class="v tom"></span></div>
+    <h1>VEGGIE CLASH <sup class="beta">BETA</sup></h1>
+    <p class="tag">Collect seeds. Bump rivals. Win the kitchen.</p>
     <div class="bar" role="progressbar" aria-label="Loading" aria-valuemin="0" aria-valuemax="100"><i id="fill"></i></div>
     <p id="status">Loading 0%</p>
-    <p class="hint">Drag anywhere to move. Sound starts on your first touch.</p>
+    <p class="hint">Drag to move &middot; double-tap to dash &middot; best in portrait</p>
   </div>
 </div>
 
@@ -139,6 +146,11 @@
     // Stop the page from scrolling or zooming while playing.
     document.addEventListener("touchmove", function (e) { e.preventDefault(); }, { passive: false });
     document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
+    // Double-tap is the dash: never let the browser zoom or select on it (iOS Safari).
+    document.addEventListener("dblclick", function (e) { e.preventDefault(); }, { passive: false });
+    var lastEnd = 0;
+    document.addEventListener("touchend", function (e) { var now = Date.now(); if (now - lastEnd < 350) e.preventDefault(); lastEnd = now; }, { passive: false });
+    document.addEventListener("contextmenu", function (e) { e.preventDefault(); });
 
     if (typeof createUnityInstance !== "function") {
       fail("The game files did not load. Reload the page to try again.");
@@ -152,7 +164,7 @@
       codeUrl: "Build/code.gz.wasm",
       streamingAssetsUrl: "StreamingAssets",
       companyName: "Ahmad",
-      productName: "Potato Guy",
+      productName: "Veggie Clash",
       productVersion: "1.0",
       devicePixelRatio: Math.min(window.devicePixelRatio || 1, 2),
       matchWebGLToCanvasSize: true,
@@ -165,10 +177,28 @@
       fill.style.width = pct + "%";
       bar.setAttribute("aria-valuenow", pct);
       status.textContent = pct < 100 ? "Loading " + pct + "%" : "Starting";
-    }).then(function () {
-      loader.classList.add("done");
-      setTimeout(function () { loader.hidden = true; }, 450);
-      canvas.focus();
+    }).then(function (instance) {
+      // "Tap to start": the tap gives the game focus and unlocks sound (iOS), so the first tap in the menu always works.
+      status.textContent = "Tap to start";
+      status.classList.add("ready");
+      bar.hidden = true;
+      var started = false;
+      function start(e) {
+        if (started) return;
+        started = true;
+        if (e) e.preventDefault();
+        try { instance.SendMessage("POTATO GUY", "WebStarted"); } catch (err) { }   // the game ignores this tap
+        canvas.focus();
+        loader.classList.add("done");
+        setTimeout(function () { loader.hidden = true; }, 500);
+      }
+      // the start tap must never reach the game underneath (it pressed PLAY): swallow every pointer event on the card
+      ["pointerdown", "mousedown", "touchstart", "pointerup", "mouseup", "click"].forEach(function (t) {
+        loader.addEventListener(t, function (e) { e.stopPropagation(); if (t !== "touchstart") e.preventDefault(); }, { passive: false });
+      });
+      loader.addEventListener("pointerup", start);
+      loader.addEventListener("touchend", function (e) { e.stopPropagation(); start(e); }, { passive: false });
+      document.addEventListener("keydown", start, { once: true });
     }).catch(function (err) {
       fail("The game could not start on this browser: " + (err && err.message ? err.message : err));
     });
