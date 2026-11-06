@@ -3,18 +3,18 @@
 <title>Potato Guy</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Nunito:wght@600;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;800&display=swap">
 <style>
   /* Layout: one full-screen portrait stage (9:16 on wide screens), loading card over it until the game runs. */
   :root {
-    --night: #0f1a14;
-    --stage: #16241c;
-    --slime: #6fdc5a;
-    --slime-deep: #2f8f3a;
-    --ink: #eaf6e4;
-    --muted: #93ad8c;
+    --night: #2f3240;
+    --stage: #3b3f4e;
+    --slime: #d9a15a;
+    --slime-deep: #a8743a;
+    --ink: #fffcf6;
+    --muted: #b9b3a6;
     --alarm: #ff5a4e;
-    --display: "Bungee", "Impact", "Arial Black", sans-serif;
+    --display: "Nunito", "Segoe UI", system-ui, sans-serif;
     --body: "Nunito", "Segoe UI", system-ui, sans-serif;
     color-scheme: dark;
   }
@@ -55,7 +55,7 @@
     padding-left: max(16px, env(safe-area-inset-left, 0px));
     padding-right: max(16px, env(safe-area-inset-right, 0px));
     background:
-      radial-gradient(circle at 50% 38%, rgba(111, 220, 90, 0.18), transparent 55%),
+      radial-gradient(circle at 50% 38%, rgba(217, 161, 90, 0.16), transparent 55%),
       var(--night);
     text-align: center;
     transition: opacity 0.4s ease;
@@ -83,12 +83,12 @@
   }
   h1 {
     font-family: var(--display);
-    font-weight: 400;
+    font-weight: 800;
     font-size: clamp(40px, 12vw, 64px);
     letter-spacing: 0.04em;
     margin: 0;
     color: var(--slime);
-    text-shadow: 0 4px 0 var(--slime-deep);
+    text-shadow: none;
     text-wrap: balance;
   }
   .tag { margin: -10px 0 0; color: var(--muted); font-weight: 600; font-size: 16px; }
@@ -114,8 +114,8 @@
   <canvas id="unity-canvas" tabindex="-1"></canvas>
   <div id="loader">
     <div class="blob" aria-hidden="true"></div>
-    <h1>RAMPAGE</h1>
-    <p class="tag">Two games: Rampage and Potato Guy.</p>
+    <h1>POTATO GUY</h1>
+    <p class="tag">A tiny spud in a big kitchen.</p>
     <div class="bar" role="progressbar" aria-label="Loading" aria-valuemin="0" aria-valuemax="100"><i id="fill"></i></div>
     <p id="status">Loading 0%</p>
     <p class="hint">Drag anywhere to move. Sound starts on your first touch.</p>
@@ -152,7 +152,7 @@
       codeUrl: "Build/code.gz.wasm",
       streamingAssetsUrl: "StreamingAssets",
       companyName: "Ahmad",
-      productName: "Rampage",
+      productName: "Potato Guy",
       productVersion: "1.0",
       devicePixelRatio: Math.min(window.devicePixelRatio || 1, 2),
       matchWebGLToCanvasSize: true,
