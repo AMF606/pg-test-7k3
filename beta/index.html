@@ -18,7 +18,7 @@
     --body: "Nunito", "Segoe UI", system-ui, sans-serif;
     color-scheme: dark;
   }
-  html, body { height: 100%; }
+  html, body { height: 100%; touch-action: none; -webkit-tap-highlight-color: transparent; }
   body {
     background: var(--night);
     color: var(--ink);
@@ -32,7 +32,7 @@
     position: relative;
     height: 100%;
     width: 100%;
-    max-width: calc(100vh * 9 / 16);
+    max-width: 100%;   /* beta: the game adapts to any aspect (phones, tablets, desktop) */
     margin: 0 auto;
     background: var(--stage);
   }
@@ -144,6 +144,11 @@
     // Stop the page from scrolling or zooming while playing.
     document.addEventListener("touchmove", function (e) { e.preventDefault(); }, { passive: false });
     document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
+    // Double-tap is the dash: never let the browser zoom or select on it (iOS Safari).
+    document.addEventListener("dblclick", function (e) { e.preventDefault(); }, { passive: false });
+    var lastEnd = 0;
+    document.addEventListener("touchend", function (e) { var now = Date.now(); if (now - lastEnd < 350) e.preventDefault(); lastEnd = now; }, { passive: false });
+    document.addEventListener("contextmenu", function (e) { e.preventDefault(); });
 
     if (typeof createUnityInstance !== "function") {
       fail("The game files did not load. Reload the page to try again.");
