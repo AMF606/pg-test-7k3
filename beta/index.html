@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="robots" content="noindex, nofollow"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no"><meta name="apple-mobile-web-app-capable" content="yes">
-<title>Veggie Clash (Beta)</title><meta name="description" content="Veggie Clash beta: collect seeds, bump rival veggies, win the kitchen.">
+<title>Patata (Beta)</title><meta name="description" content="Patata beta: collect seeds, bump rival veggies, win the kitchen.">
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;800&display=swap">
@@ -121,11 +121,11 @@
   <canvas id="unity-canvas" tabindex="-1"></canvas>
   <div id="loader">
     <div class="cast" aria-hidden="true"><span class="v pep"></span><span class="v blob"></span><span class="v tom"></span></div>
-    <h1>VEGGIE CLASH <sup class="beta">BETA</sup></h1>
+    <h1>PATATA <sup class="beta">BETA</sup></h1>
     <p class="tag">Collect seeds. Bump rivals. Win the kitchen.</p>
     <div class="bar" role="progressbar" aria-label="Loading" aria-valuemin="0" aria-valuemax="100"><i id="fill"></i></div>
     <p id="status">Loading 0%</p>
-    <p class="hint">Drag to move &middot; double-tap to dash &middot; best in portrait</p>
+    <p class="hint">Swipe to move &middot; best in portrait &middot; Beta 1.1</p>
   </div>
 </div>
 
@@ -164,7 +164,7 @@
       codeUrl: "Build/code.gz.wasm",
       streamingAssetsUrl: "StreamingAssets",
       companyName: "Ahmad",
-      productName: "Veggie Clash",
+      productName: "Veggie Clash",   // internal id (kept: saved progress lives under it); the shown name is Patata
       productVersion: "1.0",
       devicePixelRatio: Math.min(window.devicePixelRatio || 1, 2),
       matchWebGLToCanvasSize: true,
@@ -183,9 +183,28 @@
       status.classList.add("ready");
       bar.hidden = true;
       var started = false;
+      // Tilt control: stream the phone's orientation to the game (~30 times a second). iPhones ask for "Motion"
+      // permission, which may only be requested inside a tap, so it is asked on this "Tap to start" tap.
+      var lastTilt = 0;
+      function onTilt(ev) {
+        var now = Date.now();
+        if (now - lastTilt < 33 || ev.beta == null || ev.gamma == null) return;
+        lastTilt = now;
+        try { instance.SendMessage("POTATO GUY", "Tilt", ev.beta.toFixed(1) + "," + ev.gamma.toFixed(1)); } catch (err) { }
+      }
+      function startMotion() {
+        try {
+          if (typeof DeviceOrientationEvent !== "undefined" && typeof DeviceOrientationEvent.requestPermission === "function") {
+            DeviceOrientationEvent.requestPermission().then(function (s) {
+              if (s === "granted") window.addEventListener("deviceorientation", onTilt);
+            }).catch(function () { });
+          } else window.addEventListener("deviceorientation", onTilt);
+        } catch (err) { }
+      }
       function start(e) {
         if (started) return;
         started = true;
+        startMotion();
         if (e) e.preventDefault();
         try { instance.SendMessage("POTATO GUY", "WebStarted"); } catch (err) { }   // the game ignores this tap
         canvas.focus();
